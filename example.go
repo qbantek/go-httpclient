@@ -2,13 +2,19 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/qbantek/go-httpclient/gohttp"
 )
 
 func main() {
 	client := gohttp.New()
-	client.Get()
+	response, err := client.Get("https://api.github.com", nil)
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Println(client)
+	fmt.Println(response.StatusCode)
+	io.Copy(os.Stdout, response.Body)
 }
