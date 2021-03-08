@@ -25,3 +25,6 @@ jobs:
 
       - name: tools
         run: go get golang.org/x/lint/golint
+
+      - name: tests
+        run: make
