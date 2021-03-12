@@ -1,10 +1,9 @@
 .PHONY: all
-# all: test vet lint fmt
-all: vet lint fmt
+all: test vet lint fmt
 
-# .PHONY: test
-# test:
-# 	@go test . -cover
+.PHONY: test
+test:
+	@go test . -cover
 
 .PHONY: vet
 vet:
