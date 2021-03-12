@@ -8,7 +8,7 @@ import (
 	"github.com/qbantek/go-httpclient/gohttp"
 )
 
-type User struct {
+type user struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 }
@@ -31,7 +31,7 @@ func getGithubClient() gohttp.HTTPClient {
 	return githubClient
 }
 
-func createUser(user User) {
+func createUser(user user) {
 	response, err := client.Post("https://api.github.com", nil, user)
 	if err != nil {
 		panic(err)
