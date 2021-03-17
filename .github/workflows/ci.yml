@@ -23,6 +23,18 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
 
+      - uses: actions/cache@v2
+        with:
+          # In order:
+          # * Module download cache
+          # * Build cache (Linux)
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
       - name: tools
         run: go get golang.org/x/lint/golint
 
