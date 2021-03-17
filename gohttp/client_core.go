@@ -49,11 +49,11 @@ func (c *httpClient) do(method string,
 
 	req.Header = reqHeaders
 
-	client := c.getHttpClient()
+	client := c.getHTTPClient()
 	return client.Do(req)
 }
 
-func (c *httpClient) getHttpClient() *http.Client {
+func (c *httpClient) getHTTPClient() *http.Client {
 	if c.client != nil {
 		return c.client
 	}
