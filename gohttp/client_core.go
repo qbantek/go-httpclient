@@ -3,14 +3,21 @@ package gohttp
 import (
 	"bytes"
 	"encoding/xml"
-	"io"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	"gopkg.in/square/go-jose.v2/json"
 )
 
-func (c *httpClient) getRequestBody(contentType string,
+const (
+	defaultConnectionTimeout = 2 * time.Second
+	defaultResponseTimeout   = 1 * time.Second
+)
+
+func (c *httpClient) requestBody(
+	contentType string,
 	body interface{}) ([]byte, error) {
 	if body == nil {
 		return nil, nil
@@ -29,50 +36,90 @@ func (c *httpClient) do(method string,
 	headers http.Header,
 	body interface{}) (*http.Response, error) {
 
-	requestHeaders := c.allHeaders(headers)
-	requestBody, err := c.getRequestBody(requestHeaders.Get("Content-Type"), body)
+	reqHeaders := c.allHeaders(headers)
+	reqBody, err := c.requestBody(reqHeaders.Get("Content-Type"), body)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := request(method, url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header = requestHeaders
+	req.Header = reqHeaders
 
-	client := http.Client{}
+	client := c.getHttpClient()
 	return client.Do(req)
 }
 
-func request(method string,
-	url string,
-	body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, url, body)
-	if err != nil {
-		return nil, err
+func (c *httpClient) getHttpClient() *http.Client {
+	if c.client != nil {
+		return c.client
 	}
 
-	return req, nil
+	c.client = &http.Client{
+		Timeout: c.getConnectionTimeout() + c.getResponseTimeout(),
+		Transport: &http.Transport{
+			MaxIdleConnsPerHost:   c.getMaxIdleConnections(),
+			ResponseHeaderTimeout: c.getResponseTimeout(),
+			DialContext: (&net.Dialer{
+				Timeout: c.getConnectionTimeout(),
+			}).DialContext,
+		},
+	}
+
+	return c.client
+}
+
+func (c *httpClient) getMaxIdleConnections() int {
+	if c.maxIdleConns > 0 {
+		return c.maxIdleConns
+	}
+
+	return http.DefaultMaxIdleConnsPerHost
+}
+
+func (c *httpClient) getConnectionTimeout() time.Duration {
+	if c.disableTimeouts {
+		return 0
+	}
+
+	if c.connectionTimeout > 0 {
+		return c.connectionTimeout
+	}
+
+	return defaultConnectionTimeout
+}
+
+func (c *httpClient) getResponseTimeout() time.Duration {
+	if c.disableTimeouts {
+		return 0
+	}
+
+	if c.responseTimeout > 0 {
+		return c.responseTimeout
+	}
+
+	return defaultResponseTimeout
 }
 
 func (c *httpClient) allHeaders(headers http.Header) http.Header {
-	result := make(http.Header)
-
-	// Add common headers
-	setHeaders(result, c.Headers)
-
-	// Add custom headers
-	setHeaders(result, headers)
-
-	return result
-}
-
-func setHeaders(h http.Header, newHeaders http.Header) {
-	for k, values := range newHeaders {
-		if len(values) > 0 {
-			h.Set(k, values[0])
+	setHeaders := func(h http.Header, newHeaders http.Header) {
+		for k, values := range newHeaders {
+			if len(values) > 0 {
+				h.Set(k, values[0])
+			}
 		}
 	}
+
+	h := make(http.Header)
+
+	// Add common headers
+	setHeaders(h, c.Headers)
+
+	// Add custom headers
+	setHeaders(h, headers)
+
+	return h
 }

@@ -6,36 +6,77 @@ import (
 )
 
 func TestAllHeaders(t *testing.T) {
+	commonHeaders := func() http.Header {
+		t.Helper()
+		h := make(http.Header)
+		h.Set("Content-Type", "application/json")
+		h.Set("User-Agent", "Go-HTTP-Client")
+
+		return h
+	}
 	c := httpClient{}
 	c.Headers = commonHeaders()
 
+	customHeaders := func() http.Header {
+		t.Helper()
+		h := make(http.Header)
+		h.Set("Content-Type", "application/xml")
+		h.Set("X-Request-Id", "ABC-123")
+
+		return h
+	}
 	headers := c.allHeaders(customHeaders())
 
-	// matching common headers are overwritten by custom ones
-	const wantCt = "application/xml"
-	if ct := headers.Get("Content-Type"); ct != wantCt {
-		t.Errorf("got %v Content Type, want %v", ct, wantCt)
-	}
+	t.Run("custom headers override matching common headers", func(t *testing.T) {
+		// custom headers override common headers with the same key
+		if got := headers.Get("Content-Type"); got != "application/xml" {
+			t.Errorf("got %v, want %v", got, "application/xml")
+		}
+	})
 
-	// all headers = common + custom (-overwritten)
-	const wantTotal = 3
-	if a := len(headers); a != wantTotal {
-		t.Errorf("got %v headers, want %v", a, wantTotal)
-	}
+	t.Run("custom and common headers get merged", func(t *testing.T) {
+		// custom and common headers get merged
+		if got := len(headers); got != 3 {
+			t.Errorf("got %v headers, want %v", got, 3)
+		}
+	})
 }
 
-func commonHeaders() http.Header {
-	common := make(http.Header)
-	common.Set("Content-Type", "application/json")
-	common.Set("User-Agent", "Go-HTTP-Client")
+func TestGetRequestBody(t *testing.T) {
+	c := httpClient{}
 
-	return common
-}
+	t.Run("Null body", func(t *testing.T) {
+		got, err := c.requestBody("anything", nil)
+		if err != nil {
+			t.Errorf("got error: %v, want no error", err)
+		}
 
-func customHeaders() http.Header {
-	custom := make(http.Header)
-	custom.Set("Content-Type", "application/xml")
-	custom.Set("X-Request-Id", "ABC-123")
+		if got != nil {
+			t.Errorf("got %v, want %v", got, nil)
+		}
+	})
 
-	return custom
+	type s struct{ A string }
+	b := &s{A: "b"}
+	tests := map[string]struct {
+		contentType string
+		body        *s
+		want        string
+	}{
+		"xml content type":  {"application/xml", b, "<s><A>b</A></s>"},
+		"json content type": {"application/json", b, "{\"A\":\"b\"}"},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := c.requestBody(tc.contentType, tc.body)
+			if err != nil {
+				t.Errorf("got error: %v, want no error", err)
+			}
+
+			if string(got) != tc.want {
+				t.Errorf("got %v, want %v", string(got), tc.want)
+			}
+		})
+	}
 }

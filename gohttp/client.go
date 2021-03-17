@@ -2,14 +2,26 @@ package gohttp
 
 import (
 	"net/http"
+	"time"
 )
 
 type httpClient struct {
+	client *http.Client
+
+	disableTimeouts   bool
+	maxIdleConns      int
+	connectionTimeout time.Duration
+	responseTimeout   time.Duration
+
 	Headers http.Header
 }
 
 // HTTPClient ...
 type HTTPClient interface {
+	DisableTimeouts(disable bool)
+	SetMaxIdleConns(m int)
+	SetConnectionTimeout(t time.Duration)
+	SetResponseTimeout(t time.Duration)
 	SetHeaders(headers http.Header)
 	Get(string, http.Header) (*http.Response, error)
 	Post(string, http.Header, interface{}) (*http.Response, error)
@@ -18,6 +30,32 @@ type HTTPClient interface {
 	Delete(string, http.Header) (*http.Response, error)
 }
 
+// New ...
+func New() HTTPClient {
+	return &httpClient{}
+}
+
+// DisableTimeouts...
+func (c *httpClient) DisableTimeouts(disable bool) {
+	c.disableTimeouts = disable
+}
+
+// SetMaxIddleConns...
+func (c *httpClient) SetMaxIdleConns(m int) {
+	c.maxIdleConns = m
+}
+
+// SetConnectionTimeout ...
+func (c *httpClient) SetConnectionTimeout(d time.Duration) {
+	c.connectionTimeout = d
+}
+
+// SetRequestTimeout ...
+func (c *httpClient) SetResponseTimeout(d time.Duration) {
+	c.responseTimeout = d
+}
+
+// SetHeaders ...
 func (c *httpClient) SetHeaders(headers http.Header) {
 	c.Headers = headers
 }
@@ -53,10 +91,4 @@ func (c *httpClient) Patch(url string,
 func (c *httpClient) Delete(url string,
 	headers http.Header) (*http.Response, error) {
 	return c.do(http.MethodDelete, url, headers, nil)
-}
-
-// New ...
-func New() HTTPClient {
-	client := &httpClient{}
-	return client
 }

@@ -25,10 +25,15 @@ func getGithubClient() gohttp.HTTPClient {
 	commonHeaders := make(http.Header)
 	commonHeaders.Set("Authorization", "Bearer ABC-123")
 
-	githubClient := gohttp.New()
-	githubClient.SetHeaders(commonHeaders)
+	client := gohttp.New()
 
-	return githubClient
+	client.DisableTimeouts(true)
+	// client.SetMaxIdleConns(4)
+	// client.SetConnectionTimeout(1 * time.Second)
+	// client.SetResponseTimeout(2 * time.Millisecond)
+	// client.SetHeaders(commonHeaders)
+
+	return client
 }
 
 func createUser(user user) {
