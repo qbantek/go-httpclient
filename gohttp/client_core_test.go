@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestAllHeaders(t *testing.T) {
+func TestRequestHeaders(t *testing.T) {
 	commonHeaders := func() http.Header {
 		t.Helper()
 		h := make(http.Header)
@@ -14,8 +14,10 @@ func TestAllHeaders(t *testing.T) {
 
 		return h
 	}
-	c := httpClient{}
-	c.Headers = commonHeaders()
+
+	c := NewBuilder().
+		SetHeaders(commonHeaders()).
+		Build()
 
 	customHeaders := func() http.Header {
 		t.Helper()
@@ -25,24 +27,22 @@ func TestAllHeaders(t *testing.T) {
 
 		return h
 	}
-	headers := c.allHeaders(customHeaders())
+	headers := c.requestHeaders(customHeaders())
 
 	t.Run("custom headers override matching common headers", func(t *testing.T) {
-		// custom headers override common headers with the same key
 		if got := headers.Get("Content-Type"); got != "application/xml" {
 			t.Errorf("got %v, want %v", got, "application/xml")
 		}
 	})
 
 	t.Run("custom and common headers get merged", func(t *testing.T) {
-		// custom and common headers get merged
 		if got := len(headers); got != 3 {
 			t.Errorf("got %v headers, want %v", got, 3)
 		}
 	})
 }
 
-func TestGetRequestBody(t *testing.T) {
+func TestRequestBody(t *testing.T) {
 	c := httpClient{}
 
 	t.Run("Null body", func(t *testing.T) {
@@ -63,8 +63,9 @@ func TestGetRequestBody(t *testing.T) {
 		body        *s
 		want        string
 	}{
-		"xml content type":  {"application/xml", b, "<s><A>b</A></s>"},
-		"json content type": {"application/json", b, "{\"A\":\"b\"}"},
+		"xml content type":     {"application/xml", b, "<s><A>b</A></s>"},
+		"json content type":    {"application/json", b, "{\"A\":\"b\"}"},
+		"default content type": {"any-other", b, "{\"A\":\"b\"}"},
 	}
 
 	for name, tc := range tests {

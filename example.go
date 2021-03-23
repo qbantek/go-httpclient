@@ -1,9 +1,8 @@
 package main
 
 import (
-	"io"
-	"net/http"
-	"os"
+	"fmt"
+	"time"
 
 	"github.com/qbantek/go-httpclient/gohttp"
 )
@@ -14,24 +13,20 @@ type user struct {
 }
 
 var (
-	client = getGithubClient()
+	client = githubClient()
 )
 
 func main() {
 	getUrls()
+	// createUser(user{})
 }
 
-func getGithubClient() gohttp.HTTPClient {
-	commonHeaders := make(http.Header)
-	commonHeaders.Set("Authorization", "Bearer ABC-123")
-
-	client := gohttp.New()
-
-	client.DisableTimeouts(true)
-	// client.SetMaxIdleConns(4)
-	// client.SetConnectionTimeout(1 * time.Second)
-	// client.SetResponseTimeout(2 * time.Millisecond)
-	// client.SetHeaders(commonHeaders)
+func githubClient() gohttp.Client {
+	client := gohttp.NewBuilder().
+		SetMaxIdleConns(4).
+		SetConnectionTimeout(1 * time.Second).
+		SetResponseTimeout(4 * time.Second).
+		Build()
 
 	return client
 }
@@ -42,10 +37,8 @@ func createUser(user user) {
 		panic(err)
 	}
 
-	_, err = io.Copy(os.Stdout, response.Body)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Println(response.Status())
+	fmt.Println(response.String())
 }
 
 func getUrls() {
@@ -54,8 +47,6 @@ func getUrls() {
 		panic(err)
 	}
 
-	_, err = io.Copy(os.Stdout, response.Body)
-	if err != nil {
-		panic(err)
-	}
+	fmt.Println(response.Status())
+	fmt.Println(response.String())
 }
