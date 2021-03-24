@@ -2,18 +2,15 @@ package examples
 
 import "fmt"
 
-/*
-  "current_user_url": "https://api.github.com/user",                                                                                                                                                                                            "current_user_authorizations_html_url": "https://github.com/settings/connections/applications{/client_id}",
-  "authorizations_url": "https://api.github.com/authorizations",
-	"repository_url": "https://api.github.com/repos/{owner}/{repo}",
-*/
-
+// EndPoints holds the values of the urls for some endpoints of the GitHub API.
 type EndPoints struct {
-	CurrentUserUrl    string `json:"current_user_url"`
-	AuthorizationsUrl string `json:"authorizations_url"`
-	RepositoryUrl     string `json:"repository_url"`
+	CurrentUserURL   string `json:"current_user_url"`
+	AuthorizationURL string `json:"authorizations_url"`
+	RepositoryURL    string `json:"repository_url"`
 }
 
+// GetEndPoints gets all endpoint urls from the GitHub API and returns the
+// results as an EndPoint value.
 func GetEndPoints() (*EndPoints, error) {
 	response, err := httpClient.Get("https://api.github.com", nil)
 	if err != nil {
@@ -25,10 +22,10 @@ func GetEndPoints() (*EndPoints, error) {
 	fmt.Println(fmt.Sprintf("Body: %s\n", response.String()))
 
 	var endpoints EndPoints
-	if err := response.UnmarshalJson(&endpoints); err != nil {
+	if err := response.UnmarshalJSONBody(&endpoints); err != nil {
 		return nil, err
 	}
-	fmt.Println(fmt.Sprintf("RepositoryUrl: %s", endpoints.RepositoryUrl))
+	fmt.Println(fmt.Sprintf("RepositoryUrl: %s", endpoints.RepositoryURL))
 
 	return &endpoints, nil
 }

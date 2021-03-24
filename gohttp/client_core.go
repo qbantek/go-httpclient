@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -42,7 +43,11 @@ func (c *httpClient) do(method string,
 		return nil, err
 	}
 
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 	responseBody, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
