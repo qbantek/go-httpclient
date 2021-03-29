@@ -13,7 +13,7 @@ func TestPost(t *testing.T) {
 		Name: "foo",
 	}
 
-	expected_body, err := json.Marshal(&repo)
+	expectedBody, err := json.Marshal(&repo)
 	if err != nil {
 		panic(err)
 	}
@@ -22,7 +22,7 @@ func TestPost(t *testing.T) {
 	gohttp.AddMock(&gohttp.Mock{
 		Method:             http.MethodPost,
 		URL:                "https://api.github.com",
-		RequestBody:        string(expected_body),
+		RequestBody:        string(expectedBody),
 		ResponseStatusCode: 201,
 		ResponseBody:       `{"ok": true}`,
 	})
