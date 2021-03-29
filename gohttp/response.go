@@ -1,9 +1,8 @@
 package gohttp
 
 import (
+	"encoding/json"
 	"net/http"
-
-	"gopkg.in/square/go-jose.v2/json"
 )
 
 // Response represents the response from an HTTP request.
