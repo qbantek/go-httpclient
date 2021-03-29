@@ -3,11 +3,11 @@ all: test vet lint fmt
 
 .PHONY: test
 test:
-	@go test ./gohttp/ -v -cover
+	@go test ./... -v -cover
 
 .PHONY: vet
 vet:
-	@go vet -all .
+	@go vet -all ./...
 
 .PHONY: lint
 lint:
