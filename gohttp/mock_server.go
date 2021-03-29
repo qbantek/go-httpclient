@@ -1,8 +1,10 @@
 package gohttp
 
 import (
-	"errors"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 )
 
@@ -18,7 +20,7 @@ type mockServer struct {
 	mocks       map[string]*Mock
 }
 
-// Starts the Mock server
+// StartMockServer starts the Mock server
 func StartMockServer() {
 	mockupServer.serverMutex.Lock()
 	defer mockupServer.serverMutex.Unlock()
@@ -26,7 +28,7 @@ func StartMockServer() {
 	mockupServer.enable = true
 }
 
-// Stops the Mock server
+// StopMockServer stops the Mock server
 func StopMockServer() {
 	mockupServer.serverMutex.Lock()
 	defer mockupServer.serverMutex.Unlock()
@@ -43,8 +45,30 @@ func AddMock(mock *Mock) {
 	mockupServer.mocks[k] = mock
 }
 
+// FlushMocks deletes all mocks
+func FlushMocks() {
+	mockupServer.serverMutex.Lock()
+	defer mockupServer.serverMutex.Unlock()
+
+	mockupServer.mocks = make(map[string]*Mock)
+}
+
 func (m *mockServer) key(method, url, body string) string {
-	return method + url + body
+	hasher := md5.New()
+	hasher.Write([]byte(method + url + sanitize(body)))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func sanitize(s string) string {
+	sanitized := strings.TrimSpace(s)
+	if sanitized == "" {
+		return sanitized
+	}
+
+	sanitized = strings.ReplaceAll(sanitized, "\t", "")
+	sanitized = strings.ReplaceAll(sanitized, "\n", "")
+
+	return sanitized
 }
 
 func (m *mockServer) mock(method, url, body string) *Mock {
@@ -58,6 +82,6 @@ func (m *mockServer) mock(method, url, body string) *Mock {
 	}
 
 	return &Mock{
-		Error: errors.New(fmt.Sprintf("no mock matching %s from %s", method, url)),
+		Error: fmt.Errorf("no mock matching %s from %s", method, url),
 	}
 }

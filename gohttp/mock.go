@@ -16,6 +16,8 @@ type Mock struct {
 	ResponseStatusCode int
 }
 
+// Response returns the mocked up response, including status, status code and
+// body
 func (m *Mock) Response() (*Response, error) {
 	if m.Error != nil {
 		return nil, m.Error
