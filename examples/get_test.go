@@ -57,7 +57,8 @@ func TestGetEndPoints(t *testing.T) {
 		if err == nil {
 			t.Error("error was expected")
 		} else {
-			want := "json: cannot unmarshal number into Go value of type string"
+			want := "json: cannot unmarshal number into Go struct field " +
+				"EndPoints.current_user_url of type string"
 			if err.Error() != want {
 				t.Errorf("want %s, got %s", want, err.Error())
 			}
